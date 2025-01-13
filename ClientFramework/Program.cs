@@ -33,12 +33,46 @@ namespace ClientFramework
 
                 client.CommunicateStream();
             });
-                       
-  
+
+            var t1 = Task.Run(async () =>
+            {
+                GRPCFrameworkClient_gRPC_Web client = new GRPCFrameworkClient_gRPC_Web("localhost", "https", 7274);
+                await Task.Delay(10000);
+
+                client.Communicate();
+
+                client.CommunicateStream();
+            });
+
             while (true)
             {
-                Task.WaitAll(t);
+                Task.WaitAll(t, t1);
             }
+        }
+    }
+
+    public class GRPCFrameworkClient_gRPC_Web : GRPCFrameworkClient
+    {
+        public GRPCFrameworkClient_gRPC_Web(string host, string scheme, int port) : base(host, scheme, port)
+        {
+
+        }
+
+        protected override string ClientName { get; set; } = "Framework GRPCWEB 4.7.2";
+        public override void CreateChannel(ILoggerFactory loggerFactory)
+        {
+            GrpcChannelOptions opt = new GrpcChannelOptions()
+            {
+                LoggerFactory = loggerFactory,
+
+                HttpHandler = new GrpcWebHandler(new WinHttpHandler()
+                {
+                    ServerCertificateValidationCallback = Validate,
+                    SslProtocols = System.Security.Authentication.SslProtocols.Tls12
+                })
+            };
+
+            _channel = GrpcChannel.ForAddress(Uri.AbsoluteUri, opt);
         }
     }
 
@@ -47,7 +81,7 @@ namespace ClientFramework
     public class GRPCFrameworkClient
     {
         public Uri Uri { get; set; } = null;
-        private GrpcChannel _channel { get; set; } = null;
+        protected GrpcChannel _channel { get; set; } = null;
         public GRPCFrameworkClient(string host, string scheme, int port)
         {
             Uri = new UriBuilder(scheme, host, port).Uri;
@@ -80,7 +114,7 @@ namespace ClientFramework
         {
             return true;
         }
-        string ClientName { get; set; } = "FRAMEWORK 4.7.2";
+        protected virtual string ClientName { get; set; } = "FRAMEWORK 4.7.2";
         CancellationTokenSource TokenSource { get; set; } = new CancellationTokenSource();
         public async void Communicate()
         {

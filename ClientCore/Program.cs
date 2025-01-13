@@ -23,18 +23,59 @@ namespace ClientCore
                 client.CommunicateStream();
             });
 
+            var t1 = Task.Run(async () =>
+            {
+                GRPCCoreClient client = new GRPCCoreClient_gRPC_Web("localhost", "https", 7274);
+                await Task.Delay(10000);
+
+                client.Communicate();
+
+                client.CommunicateStream();
+            });
+
 
             while (true)
             {
-                Task.WaitAll(t);
+                Task.WaitAll(t, t1);
             }
+        }
+    }
+
+    public class GRPCCoreClient_gRPC_Web : GRPCCoreClient
+    {
+        protected override string ClientName { get; set; } = "CORE .NET GRPCWEB";
+        public GRPCCoreClient_gRPC_Web(string host, string scheme, int port) : base(host, scheme, port)
+        {
+        }
+
+        public override void CreateChannel(ILoggerFactory loggerFactory)
+        {
+            GrpcChannelOptions opt = new GrpcChannelOptions()
+            {
+                LoggerFactory = loggerFactory,
+                //HttpVersion = new Version("1.0"),
+
+                //https://github.com/grpc/grpc-dotnet/issues/1961
+                HttpHandler = new GrpcWebHandler(new SocketsHttpHandler()
+                {
+                    ConnectTimeout = TimeSpan.FromSeconds(60),
+                    AllowAutoRedirect = true,
+
+                    SslOptions = new SslClientAuthenticationOptions()
+                    {
+                        RemoteCertificateValidationCallback = Validate
+                    }
+                })
+            };
+
+            _channel = GrpcChannel.ForAddress(Uri.AbsoluteUri, opt);
         }
     }
 
     public class GRPCCoreClient
     {
         public Uri? Uri { get; set; } = null;
-        private GrpcChannel? _channel { get; set; } = null;
+        protected GrpcChannel? _channel { get; set; } = null;
         public GRPCCoreClient(string host, string scheme, int port)
         {
             Uri = new UriBuilder(scheme, host, port).Uri;
@@ -68,7 +109,6 @@ namespace ClientCore
                 }
             };
 
-
             _channel = GrpcChannel.ForAddress(Uri.AbsoluteUri, opt);
         }
 
@@ -79,7 +119,7 @@ namespace ClientCore
 
         CancellationTokenSource TokenSource { get; set; } = new CancellationTokenSource();
 
-        string ClientName { get; set; } = "CORE .NET";
+        protected virtual string ClientName { get; set; } = "CORE .NET";
         public async void Communicate()
         {
             int i = 0;
