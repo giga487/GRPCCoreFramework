@@ -50,12 +50,18 @@ namespace ClientFramework
         private GrpcChannel _channel { get; set; } = null;
         public GRPCFrameworkClient(string host, string scheme, int port)
         {
+            Uri = new UriBuilder(scheme, host, port).Uri;
             var loggerFactory = LoggerFactory.Create(logging =>
             {
                 logging.AddConsole();
                 logging.SetMinimumLevel(LogLevel.Debug);
             });
 
+            CreateChannel(loggerFactory);
+        }
+
+        public virtual void CreateChannel(ILoggerFactory loggerFactory)
+        {
             GrpcChannelOptions opt = new GrpcChannelOptions()
             {
                 LoggerFactory = loggerFactory,
@@ -67,7 +73,6 @@ namespace ClientFramework
                 }
             };
 
-            Uri = new UriBuilder(scheme, host, port).Uri;
             _channel = GrpcChannel.ForAddress(Uri.AbsoluteUri, opt);
         }
 
