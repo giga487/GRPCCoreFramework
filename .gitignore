@@ -1,0 +1,13 @@
+
+/ClientCore/bin
+/ClientCore/obj
+/ClientFramework/bin
+/ClientFramework/obj
+/GRPCServer/.vs
+/GRPCServer/obj
+/SERVERCore/.vs
+/SERVERCore/bin
+/SERVERCore/obj
+/SERVERCore/packages
+/ClientFramework/.vs
+/ClientFramework/ILLink

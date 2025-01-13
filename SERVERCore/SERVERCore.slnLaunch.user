@@ -1,0 +1,20 @@
+[
+  {
+    "Name": "GRPC CLIENT",
+    "Projects": [
+      {
+        "Path": "SERVERCore.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
+      },
+      {
+        "Path": "..\\ClientFramework\\ClientFramework.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "..\\ClientCore\\ClientCore.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
