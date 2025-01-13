@@ -28,8 +28,6 @@ namespace ClientFramework
                 await Task.Delay(10000);
 
                 client.Communicate();
-
-
             });
                        
 
