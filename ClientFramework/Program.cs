@@ -12,6 +12,8 @@ using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using System.Reflection;
 using Grpc.Net.Client.Web;
+using Grpc.Core;
+using System.Threading;
 
 
 namespace ClientFramework
@@ -24,13 +26,15 @@ namespace ClientFramework
 
             var t = Task.Run(async () =>
             {
-                GRPCClient client = new GRPCClient("localhost", "https", 7274);
+                GRPCFrameworkClient client = new GRPCFrameworkClient("localhost", "https", 7274);
                 await Task.Delay(10000);
 
                 client.Communicate();
+
+                client.CommunicateStream();
             });
                        
-
+  
             while (true)
             {
                 Task.WaitAll(t);
@@ -40,11 +44,11 @@ namespace ClientFramework
 
     //https://learn.microsoft.com/it-it/aspnet/core/grpc/supported-platforms?view=aspnetcore-9.0
 
-    public class GRPCClient
+    public class GRPCFrameworkClient
     {
         public Uri Uri { get; set; } = null;
         private GrpcChannel _channel { get; set; } = null;
-        public GRPCClient(string host, string scheme, int port)
+        public GRPCFrameworkClient(string host, string scheme, int port)
         {
             var loggerFactory = LoggerFactory.Create(logging =>
             {
@@ -71,7 +75,8 @@ namespace ClientFramework
         {
             return true;
         }
-
+        string ClientName { get; set; } = "FRAMEWORK 4.7.2";
+        CancellationTokenSource TokenSource { get; set; } = new CancellationTokenSource();
         public async void Communicate()
         {
             int i = 0;
@@ -80,11 +85,31 @@ namespace ClientFramework
                 Console.WriteLine($"Start Communication");
                 var client = new GreeterTest.Greeter.GreeterClient(_channel);
 
-                while (true)
+
+                var response = await client.SayHelloAsync(new GreeterTest.HelloRequest { Name = $"{ClientName}" });
+                Console.WriteLine($"R: {response.Message}");
+
+            }
+            catch
+            {
+                //Console.WriteLine($"Error {ex.Message}");
+            }
+        }
+
+        public async void CommunicateStream()
+        {
+            try
+            {
+                Console.WriteLine($"Start Communication");
+                var client = new GreeterTest.Greeter.GreeterClient(_channel);
+
+                await Task.Delay(500);
+                var streaming = client.SayStreamingHello(new GreeterTest.HelloRequest() { Name = ClientName }, cancellationToken: TokenSource.Token);
+
+                while (await streaming.ResponseStream.MoveNext())
                 {
-                    await Task.Delay(500);
-                    var response = await client.SayHelloAsync(new GreeterTest.HelloRequest { Name = $"FRAMEWORK 4.7.2, ID[{i++}]" });
-                    Console.WriteLine($"R: {response.Message}");
+                    var responseMsg = streaming.ResponseStream.Current;
+                    Console.WriteLine($"RESPONSE: {responseMsg.Message}");
                 }
             }
             catch

@@ -1,4 +1,5 @@
-﻿using Grpc.Net.Client;
+﻿using Grpc.Core;
+using Grpc.Net.Client;
 using Grpc.Net.Client.Web;
 using Microsoft.Extensions.Logging;
 using System.Net.Security;
@@ -14,12 +15,12 @@ namespace ClientCore
 
             var t = Task.Run(async () =>
             {
-                GRPCClient client = new GRPCClient("localhost", "https", 7274);
+                GRPCCoreClient client = new GRPCCoreClient("localhost", "https", 7274);
                 await Task.Delay(10000);
 
                 client.Communicate();
 
-
+                client.CommunicateStream();
             });
 
 
@@ -30,11 +31,11 @@ namespace ClientCore
         }
     }
 
-    public class GRPCClient
+    public class GRPCCoreClient
     {
         public Uri? Uri { get; set; } = null;
         private GrpcChannel? _channel { get; set; } = null;
-        public GRPCClient(string host, string scheme, int port)
+        public GRPCCoreClient(string host, string scheme, int port)
         {
             var loggerFactory = LoggerFactory.Create(logging =>
             {
@@ -68,6 +69,10 @@ namespace ClientCore
         {
             return true;
         }
+
+        CancellationTokenSource TokenSource { get; set; } = new CancellationTokenSource();
+
+        string ClientName { get; set; } = "CORE .NET";
         public async void Communicate()
         {
             int i = 0;
@@ -76,11 +81,30 @@ namespace ClientCore
                 Console.WriteLine($"Start Communication");
                 var client = new GreeterTest.Greeter.GreeterClient(_channel);
 
-                while (true)
+                var response = await client.SayHelloAsync(new GreeterTest.HelloRequest { Name = $"{ClientName}" });
+                Console.WriteLine($"R: {response.Message}");
+
+            }
+            catch
+            {
+                //Console.WriteLine($"Error {ex.Message}");
+            }
+        }
+
+        public async void CommunicateStream()
+        {
+            try
+            {
+                Console.WriteLine($"Start Communication");
+                var client = new GreeterTest.Greeter.GreeterClient(_channel);
+
+                await Task.Delay(500);
+                var streaming = client.SayStreamingHello(new GreeterTest.HelloRequest() { Name = ClientName }, cancellationToken: TokenSource.Token);
+
+                while (await streaming.ResponseStream.MoveNext())
                 {
-                    await Task.Delay(500);
-                    var response = await client.SayHelloAsync(new GreeterTest.HelloRequest { Name = $"CORE .NET, ID[{i++}]" });
-                    Console.WriteLine($"R: {response.Message}");
+                    var responseMsg = streaming.ResponseStream.Current;
+                    Console.WriteLine($"RESPONSE: {responseMsg.Message}");
                 }
             }
             catch
@@ -88,5 +112,6 @@ namespace ClientCore
                 //Console.WriteLine($"Error {ex.Message}");
             }
         }
+
     }
 }
