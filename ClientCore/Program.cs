@@ -25,12 +25,12 @@ namespace ClientCore
 
             var t1 = Task.Run(async () =>
             {
-                GRPCCoreClient client = new GRPCCoreClient_gRPC_Web("localhost", "https", 7274);
-                await Task.Delay(10000);
+                //GRPCCoreClient client = new GRPCCoreClient_gRPC_Web("localhost", "https", 7274);
+                //await Task.Delay(10000);
 
-                client.Communicate();
+                //client.Communicate();
 
-                client.CommunicateStream();
+                //client.CommunicateStream();
             });
 
 

@@ -25,11 +25,11 @@ namespace SERVERCore
                 //serverOptions.ListenAnyIP(5062);
                 serverOptions.ListenAnyIP(7274, listenOptions =>
                 {
-                    listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2AndHttp3;
+                    //listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2;
 
                     listenOptions.UseHttps(httpsOpt =>
                     {
-                        httpsOpt.SslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+                        //httpsOpt.SslProtocols = System.Security.Authentication.SslProtocols.Tls12;
                         httpsOpt.ClientCertificateMode = ClientCertificateMode.NoCertificate;
                     });
                 });
@@ -40,6 +40,10 @@ namespace SERVERCore
             // Configure the HTTP request pipeline.
             app.MapGrpcService<GreeterService>();
             app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
+
+            //GRPC WEB
+            app.UseRouting();
+            app.UseGrpcWeb();
 
             app.Run();
         }

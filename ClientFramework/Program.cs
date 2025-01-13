@@ -36,12 +36,12 @@ namespace ClientFramework
 
             var t1 = Task.Run(async () =>
             {
-                GRPCFrameworkClient_gRPC_Web client = new GRPCFrameworkClient_gRPC_Web("localhost", "https", 7274);
-                await Task.Delay(10000);
+                //GRPCFrameworkClient_gRPC_Web client = new GRPCFrameworkClient_gRPC_Web("localhost", "https", 7274);
+                //await Task.Delay(10000);
 
-                client.Communicate();
+                //client.Communicate();
 
-                client.CommunicateStream();
+                //client.CommunicateStream();
             });
 
             while (true)
