@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Server.Kestrel.Https;
 using SERVERCore.Services;
 using System.IO.Compression;
 
@@ -15,6 +16,23 @@ namespace SERVERCore
                 //options.ResponseCompressionLevel = CompressionLevel.Fastest;
                 //options.ResponseCompressionAlgorithm = "gzip";
                 options.EnableDetailedErrors = true;
+            });
+
+            builder.WebHost.ConfigureKestrel((context, serverOptions) =>
+            {
+                string errString = "";
+
+                //serverOptions.ListenAnyIP(5062);
+                serverOptions.ListenAnyIP(7274, listenOptions =>
+                {
+                    listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2AndHttp3;
+
+                    listenOptions.UseHttps(httpsOpt =>
+                    {
+                        httpsOpt.SslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+                        httpsOpt.ClientCertificateMode = ClientCertificateMode.NoCertificate;
+                    });
+                });
             });
 
             var app = builder.Build();

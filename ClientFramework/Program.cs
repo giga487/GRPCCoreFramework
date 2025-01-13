@@ -24,10 +24,10 @@ namespace ClientFramework
 
             var t = Task.Run(async () =>
             {
-                GRPCClient client = new GRPCClient("localhost", "http", 5062);
+                GRPCClient client = new GRPCClient("localhost", "https", 7274);
                 await Task.Delay(10000);
 
-                client.Communicatee();
+                client.Communicate();
 
 
             });
@@ -39,6 +39,8 @@ namespace ClientFramework
             }
         }
     }
+
+    //https://learn.microsoft.com/it-it/aspnet/core/grpc/supported-platforms?view=aspnetcore-9.0
 
     public class GRPCClient
     {
@@ -55,11 +57,11 @@ namespace ClientFramework
             GrpcChannelOptions opt = new GrpcChannelOptions()
             {
                 LoggerFactory = loggerFactory,
-                HttpVersion = new Version("1.1"),
 
-                HttpHandler = new HttpClientHandler()
+                HttpHandler = new WinHttpHandler()
                 {
-
+                    ServerCertificateValidationCallback = Validate,
+                    SslProtocols = System.Security.Authentication.SslProtocols.Tls12
                 }
             };
 
@@ -71,17 +73,23 @@ namespace ClientFramework
         {
             return true;
         }
-        public async void Communicatee()
+
+        public async void Communicate()
         {
+            int i = 0;
             try
             {
                 Console.WriteLine($"Start Communication");
                 var client = new GreeterTest.Greeter.GreeterClient(_channel);
-                var response = await client.SayHelloAsync(new GreeterTest.HelloRequest { Name = "FRAMEWORK 4.7.2" });
-                Console.WriteLine($"R: {response.Message}");
 
+                while (true)
+                {
+                    await Task.Delay(500);
+                    var response = await client.SayHelloAsync(new GreeterTest.HelloRequest { Name = $"FRAMEWORK 4.7.2, ID[{i++}]" });
+                    Console.WriteLine($"R: {response.Message}");
+                }
             }
-            catch(Exception ex) 
+            catch
             {
                 //Console.WriteLine($"Error {ex.Message}");
             }

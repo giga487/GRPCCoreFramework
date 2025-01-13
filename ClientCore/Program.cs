@@ -14,10 +14,10 @@ namespace ClientCore
 
             var t = Task.Run(async () =>
             {
-                GRPCClient client = new GRPCClient("localhost", "http", 5062);
+                GRPCClient client = new GRPCClient("localhost", "https", 7274);
                 await Task.Delay(10000);
 
-                client.Communicatee();
+                client.Communicate();
 
 
             });
@@ -32,8 +32,8 @@ namespace ClientCore
 
     public class GRPCClient
     {
-        public Uri Uri { get; set; } = null;
-        private GrpcChannel _channel { get; set; } = null;
+        public Uri? Uri { get; set; } = null;
+        private GrpcChannel? _channel { get; set; } = null;
         public GRPCClient(string host, string scheme, int port)
         {
             var loggerFactory = LoggerFactory.Create(logging =>
@@ -45,11 +45,14 @@ namespace ClientCore
             GrpcChannelOptions opt = new GrpcChannelOptions()
             {
                 LoggerFactory = loggerFactory,
-                //HttpVersion = new Version("1.1"),
+                //HttpVersion = new Version("1.0"),
 
+                //https://github.com/grpc/grpc-dotnet/issues/1961
                 HttpHandler = new SocketsHttpHandler()
                 {
                     ConnectTimeout = TimeSpan.FromSeconds(60),
+                    AllowAutoRedirect = true,
+
                     SslOptions = new SslClientAuthenticationOptions()
                     {
                         RemoteCertificateValidationCallback = Validate
@@ -61,21 +64,26 @@ namespace ClientCore
             _channel = GrpcChannel.ForAddress(Uri.AbsoluteUri, opt);
         }
 
-        public bool Validate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors)
+        public bool Validate(object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors errors)
         {
             return true;
         }
-        public async void Communicatee()
+        public async void Communicate()
         {
+            int i = 0;
             try
             {
                 Console.WriteLine($"Start Communication");
                 var client = new GreeterTest.Greeter.GreeterClient(_channel);
-                var response = await client.SayHelloAsync(new GreeterTest.HelloRequest { Name = "CORE .NET" });
-                Console.WriteLine($"R: {response.Message}");
 
+                while (true)
+                {
+                    await Task.Delay(500);
+                    var response = await client.SayHelloAsync(new GreeterTest.HelloRequest { Name = $"CORE .NET, ID[{i++}]" });
+                    Console.WriteLine($"R: {response.Message}");
+                }
             }
-            catch (Exception ex)
+            catch
             {
                 //Console.WriteLine($"Error {ex.Message}");
             }

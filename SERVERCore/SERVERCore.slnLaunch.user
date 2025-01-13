@@ -5,7 +5,7 @@
       {
         "Path": "SERVERCore.csproj",
         "Action": "Start",
-        "DebugTarget": "http"
+        "DebugTarget": "https"
       },
       {
         "Path": "..\\ClientFramework\\ClientFramework.csproj",
